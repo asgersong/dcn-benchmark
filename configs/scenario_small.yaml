@@ -1,0 +1,42 @@
+# Scenario config for small network sweep (20–50 nodes).
+# Used for development and unit testing.
+
+defaults:
+  topology: small
+  topology_seed: 42
+  simulation_duration: 86400   # 24 hours in seconds
+  hydraulic_timestep: 3600     # 1-hour timestep
+  output_dir: data/raw
+
+# Healthy baseline (no fault)
+- scenario_id: small_healthy_s0
+  fault_type: null
+  seed: 0
+
+# Leak scenarios
+- scenario_id: small_leak_abrupt_s0
+  fault_type: leak
+  fault_params:
+    node_name: J-10
+    area: 0.001          # m²
+    onset_time: 43200    # 12 hours in
+    onset_profile: abrupt
+  seed: 0
+
+- scenario_id: small_leak_progressive_s0
+  fault_type: leak
+  fault_params:
+    node_name: J-10
+    area: 0.001
+    onset_time: 43200
+    onset_profile: progressive
+  seed: 0
+
+# Pump degradation
+- scenario_id: small_pump_deg_s0
+  fault_type: pump_degradation
+  fault_params:
+    pump_name: P-1
+    degradation_factor: 0.3
+    onset_time: 28800    # 8 hours in
+  seed: 0
