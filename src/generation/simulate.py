@@ -78,7 +78,33 @@ def run_simulation(
     Raises:
         RuntimeError: If the WNTR solver fails to converge.
     """
-    raise NotImplementedError
+    wn.options.time.duration = int(duration)
+    wn.options.time.hydraulic_timestep = int(hydraulic_timestep)
+    wn.options.time.report_timestep = int(hydraulic_timestep)
+    wn.options.time.pattern_timestep = int(hydraulic_timestep)
+
+    if solver == "epanet":
+        sim = wntr.sim.EpanetSimulator(wn)
+    elif solver == "wntr":
+        sim = wntr.sim.WNTRSimulator(wn)
+    else:
+        raise ValueError(f"Unknown solver '{solver}'. Choose 'epanet' or 'wntr'.")
+
+    logger.info(
+        "Running %s simulation for '%s'  (duration=%gs, timestep=%gs)",
+        solver, scenario_id, duration, hydraulic_timestep,
+    )
+    results = sim.run_sim()
+    n_steps = len(results.node["pressure"])
+    logger.info("Simulation complete — %d timesteps.", n_steps)
+
+    return SimulationResult(
+        hydraulic=results,
+        temperature_supply=pd.DataFrame(),   # thermal layer not yet implemented
+        temperature_return=pd.DataFrame(),
+        fault_metadata=fault_metadata,
+        scenario_id=scenario_id,
+    )
 
 
 def compute_thermal_profile(

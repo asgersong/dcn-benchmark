@@ -77,7 +77,35 @@ def inject_leak(
     Returns:
         FaultMetadata describing the injected fault.
     """
-    raise NotImplementedError
+    node = wn.get_node(node_name)
+
+    if onset_profile == "abrupt":
+        node.add_leak(wn, area=area, discharge_coeff=0.75,
+                      start_time=int(onset_time), end_time=None)
+    else:
+        # Progressive: approximate a 1-hour linear ramp with two discrete steps.
+        # Step 1 — half area from onset; Step 2 — full area one hour later.
+        node.add_leak(wn, area=area * 0.5, discharge_coeff=0.75,
+                      start_time=int(onset_time),
+                      end_time=int(onset_time) + 3600)
+        node.add_leak(wn, area=area, discharge_coeff=0.75,
+                      start_time=int(onset_time) + 3600, end_time=None)
+
+    # Severity normalised against 0.01 m² (≈ a 10 cm-diameter orifice,
+    # roughly the upper bound of a credible pipe leak).
+    severity = float(np.clip(area / 0.01, 0.0, 1.0))
+
+    logger.info(
+        "Injected %s leak at %s: area=%.5f m²  onset=%gs  severity=%.2f",
+        onset_profile, node_name, area, onset_time, severity,
+    )
+    return FaultMetadata(
+        fault_type="leak",
+        location=node_name,
+        severity=severity,
+        onset_time=float(onset_time),
+        onset_profile=onset_profile,
+    )
 
 
 def inject_sensor_drift(
